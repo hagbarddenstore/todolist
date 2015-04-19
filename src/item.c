@@ -8,30 +8,46 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <inttypes.h>
+#include <time.h>
 
 #define DB_DIRECTORY "/Users/hagbard/.todo/"
 
 #define DB_CREATE_SQL "CREATE TABLE IF NOT EXISTS items ( " \
 "id INTEGER PRIMARY KEY AUTOINCREMENT," \
-"description TEXT NOT NULL," \
-"done BIT NOT NULL DEFAULT 0" \
+"description TEXT NOT NULL, " \
+"created_on BIGINT NOT NULL, " \
+"expires_on BIGINT NOT NULL, " \
+"done_on BIGINT NOT NULL DEFAULT 0" \
 ");"
 
-#define DB_LIST_SQL "SELECT id, description, done FROM items;"
+#define DB_LIST_SQL "SELECT id, description, created_on, expires_on, done_on " \
+"FROM items " \
+"WHERE done_on >= strftime('%s', date('now', '-10 day')) OR done_on == 0;"
 
-#define DB_INSERT_SQL "INSERT INTO items (description, done) VALUES (?, 0);"
+#define DB_INSERT_SQL "INSERT INTO items " \
+"(description, created_on, expires_on) " \
+"VALUES (?, strftime('%s', 'now'), strftime('%s', date('now', '+10 day')));"
 
-#define DB_REMOVE_SQL "UPDATE items SET done = 1 WHERE id = ?;"
+#define DB_REMOVE_SQL "UPDATE items " \
+"SET done_on = strftime('%s', 'now') " \
+"WHERE id = ?;"
 
 struct item {
     int id;
     char *description;
-    bool done;
+    int64_t created_on;
+    int64_t expires_on;
+    int64_t done_on;
 };
 
 sqlite3* open_db();
 void ensure_db_directory_exists(void);
-int callback(void *not_used, int argc, char **argv, char **column_name);
+int callback(
+    __attribute__ ((unused)) void *not_used,
+    int argc,
+    char **argv,
+    char **column_name);
 void print_item(struct item item);
 
 void remove_item(int id) {
@@ -206,7 +222,11 @@ void ensure_db_directory_exists(void) {
     }
 }
 
-int callback(void *not_used, int argc, char **argv, char **column_name) {
+int callback(
+    __attribute__ ((unused)) void *not_used,
+    int argc,
+    char **argv,
+    char **column_name) {
     struct item item;
 
     for (int i = 0; i < argc; i++) {
@@ -216,8 +236,16 @@ int callback(void *not_used, int argc, char **argv, char **column_name) {
             item.id = atoi(value);
         }
 
-        if (strcmp(column_name[i], "done") == 0) {
-            item.done = atoi(value);
+        if (strcmp(column_name[i], "done_on") == 0) {
+            item.done_on = atoi(value);
+        }
+
+        if (strcmp(column_name[i], "created_on") == 0) {
+            item.created_on = atoi(value);
+        }
+
+        if (strcmp(column_name[i], "expires_on") == 0) {
+            item.expires_on = atoi(value);
         }
 
         if (strcmp(column_name[i], "description") == 0) {
@@ -231,8 +259,10 @@ int callback(void *not_used, int argc, char **argv, char **column_name) {
 }
 
 void print_item(struct item item) {
-    if (item.done) {
+    if (item.done_on > 0) {
         printf("#%d \033[32m%s\033[39;49m\n", item.id, item.description);
+    } else if(item.expires_on <= (unsigned)time(NULL)) {
+        printf("#%d \033[31m%s\033[39;49m\n", item.id, item.description);
     } else {
         printf("#%d %s\n", item.id, item.description);
     }
