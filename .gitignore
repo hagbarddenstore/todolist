@@ -30,3 +30,8 @@
 
 # Debug files
 *.dSYM/
+
+# bin/obj folders
+bin/
+obj/
+
