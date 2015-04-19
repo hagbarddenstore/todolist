@@ -6,7 +6,7 @@ CFLAGS=-std=c99 -Wall -Isrc
 
 LINKER=gcc -o
 
-LFLAGS=-Wall -I. -lm -lsqlite3
+LFLAGS=-lm -lsqlite3
 
 SRCDIR=src
 OBJDIR=obj
