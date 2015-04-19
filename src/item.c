@@ -43,11 +43,7 @@ struct item {
 
 sqlite3* open_db();
 void ensure_db_directory_exists(void);
-int callback(
-    __attribute__ ((unused)) void *not_used,
-    int argc,
-    char **argv,
-    char **column_name);
+int callback(void *not_used, int argc, char **argv, char **column_name);
 void print_item(struct item item);
 
 void remove_item(int id) {
@@ -222,12 +218,10 @@ void ensure_db_directory_exists(void) {
     }
 }
 
-int callback(
-    __attribute__ ((unused)) void *not_used,
-    int argc,
-    char **argv,
-    char **column_name) {
+int callback(void *not_used, int argc, char **argv, char **column_name) {
     struct item item;
+
+    (void)not_used;
 
     for (int i = 0; i < argc; i++) {
         char *value = argv[i] ? argv[i] : "NULL";
