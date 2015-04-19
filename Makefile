@@ -2,7 +2,7 @@ TARGET=todo
 
 CC=gcc
 
-CFLAGS=-std=c99 -Wall -Isrc
+CFLAGS=-std=c99 -Wall -Wextra -pedantic -Isrc
 
 LINKER=gcc -o
 
