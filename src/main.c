@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <is_int.h>
-#include <item.h>
+#include "is_int.h"
+#include "item.h"
 
 int main(int argc, char **argv) {
     if (argc == 2) {
