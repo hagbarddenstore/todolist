@@ -2,11 +2,11 @@ TARGET=todo
 
 CC=gcc
 
-CFLAGS=-std=c99 -Wall -I.
+CFLAGS=-std=c99 -Wall -Isrc
 
 LINKER=gcc -o
 
-LFLAGS=-Wall -I. -lm
+LFLAGS=-Wall -I. -lm -lsqlite3
 
 SRCDIR=src
 OBJDIR=obj
