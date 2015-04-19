@@ -10,8 +10,8 @@
 #include <string.h>
 #include <inttypes.h>
 #include <time.h>
-
-#define DB_DIRECTORY "/Users/hagbard/.todo/"
+#include <unistd.h>
+#include <pwd.h>
 
 #define DB_CREATE_SQL "CREATE TABLE IF NOT EXISTS items ( " \
 "id INTEGER PRIMARY KEY AUTOINCREMENT," \
@@ -45,6 +45,7 @@ sqlite3* open_db();
 void ensure_db_directory_exists(void);
 int callback(void *not_used, int argc, char **argv, char **column_name);
 void print_item(struct item item);
+const char *get_db_directory();
 
 void remove_item(int id) {
     int return_code;
@@ -183,9 +184,10 @@ sqlite3* open_db(void) {
     sqlite3 *db;
     int return_code;
     char *error_message = NULL;
-    char db_filename[strlen(DB_DIRECTORY) + 3];
+    const char *db_directory = get_db_directory();
+    char db_filename[strlen(db_directory) + 3];
 
-    sprintf(db_filename, "%sdb", DB_DIRECTORY);
+    sprintf(db_filename, "%sdb", db_directory);
 
     ensure_db_directory_exists();
 
@@ -211,10 +213,12 @@ sqlite3* open_db(void) {
 }
 
 void ensure_db_directory_exists(void) {
-    int result = mkdir(DB_DIRECTORY, 0700);
+    const char *db_directory = get_db_directory();
+
+    int result = mkdir(db_directory, 0700);
 
     if (result && EEXIST != errno) {
-        perror(DB_DIRECTORY);
+        perror(db_directory);
     }
 }
 
@@ -260,4 +264,20 @@ void print_item(struct item item) {
     } else {
         printf("#%d %s\n", item.id, item.description);
     }
+}
+
+const char *get_db_directory() {
+    const char *home_directory = getenv("HOME");
+
+    if (home_directory == NULL) {
+        struct passwd *pw = getpwuid(getuid());
+
+        home_directory = pw->pw_dir;
+    }
+
+    char *db_directory = malloc(sizeof(char) * (strlen(home_directory) + 7));
+
+    sprintf(db_directory, "%s/.todo/", home_directory);
+
+    return db_directory;
 }
